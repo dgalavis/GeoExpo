@@ -1,15 +1,15 @@
 // --- VISUALIZACIÓN DE CAMPO MAGNÉTICO INTERACTIVA ---
-// Botones abajo, desplazados a la derecha
-
 Table table;
 Sensor[] sensors;
 int gridSize = 5;      
 int arrowGrid = 30;    
 
 // Área de visualización y sketch
-int areaVizW = 500;
+int areaVizW = 850;  
 int areaVizH = 600;
-
+int barraH = 90;        
+int sketchW = areaVizW;
+int sketchH = areaVizH + barraH;
 
 // Colores para los niveles de campo
 color azulOscuro, verde, amarillo, rojo;
@@ -18,7 +18,7 @@ boolean mostrarHeatmap = true;
 boolean mostrarVectorGrid = true;
 
 void setup() {
-  size(700, 700);
+  size(850, 850);
   azulOscuro = color(0, 0, 139);
   verde      = color(0, 200, 0);
   amarillo   = color(255,255,0);
@@ -40,9 +40,16 @@ void setup() {
 
 void draw() {
   background(20);
+
+  // Dibuja la barra negra SOLO abajo para los botones
+  noStroke();
+  fill(30);
+  rect(0, areaVizH, sketchW, barraH);
+
   drawButtons();
 
   pushMatrix();
+  // Limita la gráfica a la parte de arriba
   clip(0, 0, areaVizW, areaVizH);
   if (mostrarHeatmap && !mostrarVectorGrid) {
     drawInterpolatedHeatmap();
@@ -61,18 +68,18 @@ void draw() {
   noClip();
   popMatrix();
 
-  // Línea divisoria opcional para separar área de botones
+  // Línea divisoria entre área gráfica y barra de botones
   stroke(100);
   line(0, areaVizH, sketchW, areaVizH);
 }
 
-// --- Botones abajo, desplazados 100px a la derecha ---
+// Botones Configuración
 void drawButtons() {
-  int bx1 = 100; // 100px desde el borde izquierdo de la ventana
-  int by  = areaVizH + 40; // Debajo del área de gráfica
+  int bx1 = 200; // desde el borde izquierdo
+  int by  = areaVizH + (barraH/2) - 20; // Centrado en la barra de abajo
   int bW  = 160;
   int bH  = 40;
-  int sep = 40 + 40; // separación entre botones
+  int sep = 40 + 40; // Espacio entre botones
 
   // Botón Heatmap
   fill(mostrarHeatmap ? color(100, 200, 255) : 180);
@@ -81,7 +88,7 @@ void drawButtons() {
   fill(0);
   noStroke();
   textAlign(CENTER, CENTER);
-  text("Mostrar campo color", bx1 + bW/2, by + bH/2);
+  text("Mapa de Intensidad", bx1 + bW/2, by + bH/2);
 
   // Botón Vector+cuadrícula
   int bx2 = bx1 + bW + sep;
@@ -90,26 +97,24 @@ void drawButtons() {
   rect(bx2, by, bW, bH, 8);
   fill(0);
   noStroke();
-  text("Mostrar flechas+cuadrícula", bx2 + bW/2, by + bH/2);
+  text("Campo Vectorial", bx2 + bW/2, by + bH/2);
 }
 
 void mousePressed() {
-  int bx1 = 100;
-  int by = areaVizH + 40;
+  int bx1 = 200;
+  int by = areaVizH + (barraH/2) - 20;
   int bW = 160;
   int bH = 40;
   int sep = 40 + 40;
-
   int bx2 = bx1 + bW + sep;
-  // Botón Heatmap
+
   if (mouseX > bx1 && mouseX < bx1+bW && mouseY > by && mouseY < by+bH)
     mostrarHeatmap = !mostrarHeatmap;
-  // Botón Vector+Grid
   if (mouseX > bx2 && mouseX < bx2+bW && mouseY > by && mouseY < by+bH)
     mostrarVectorGrid = !mostrarVectorGrid;
 }
 
-// --- Dibujo de la gráfica adaptado al área ---
+// Dibujo de la gráfica adaptado al área 
 void drawGrid() {
   stroke(80, 60);
   for (int x = 100; x <= areaVizW-100; x += arrowGrid) line(x, 100, x, areaVizH-100);
