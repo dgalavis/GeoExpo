@@ -1,24 +1,28 @@
 // --- VISUALIZACIÓN DE CAMPO MAGNÉTICO INTERACTIVA ---
-// Botones para mostrar solo el heatmap, solo flechas+cuadrícula, o ambos
+// Botones abajo, desplazados a la derecha
 
 Table table;
 Sensor[] sensors;
-int gridSize = 5;      // Tamaño de celda de heatmap (más bajo = más suave, más lento)
-int arrowGrid = 30;    // Distancia entre flechas en el campo vectorial
+int gridSize = 5;      
+int arrowGrid = 30;    
+
+// Área de visualización y sketch
+int areaVizW = 500;
+int areaVizH = 600;
+
 
 // Colores para los niveles de campo
 color azulOscuro, verde, amarillo, rojo;
 
-// Variables de visibilidad
 boolean mostrarHeatmap = true;
 boolean mostrarVectorGrid = true;
 
 void setup() {
-  size(850, 850);
-  azulOscuro = color(0, 0, 139);   // Azul oscuro (muy débil)
-  verde      = color(0, 200, 0);   // Verde (medio)
-  amarillo   = color(255,255,0);   // Amarillo (moderado)
-  rojo       = color(255,0,0);     // Rojo (muy fuerte)
+  size(700, 700);
+  azulOscuro = color(0, 0, 139);
+  verde      = color(0, 200, 0);
+  amarillo   = color(255,255,0);
+  rojo       = color(255,0,0);
 
   table = loadTable("lecturas.csv", "header");
   sensors = new Sensor[table.getRowCount()];
@@ -38,7 +42,8 @@ void draw() {
   background(20);
   drawButtons();
 
-  // Lógica de visualización según los botones
+  pushMatrix();
+  clip(0, 0, areaVizW, areaVizH);
   if (mostrarHeatmap && !mostrarVectorGrid) {
     drawInterpolatedHeatmap();
   } else if (!mostrarHeatmap && mostrarVectorGrid) {
@@ -53,53 +58,69 @@ void draw() {
     drawSensorArrows();
     drawSensorPositions();
   }
-  // Si ninguno está seleccionado, solo se ven los botones
+  noClip();
+  popMatrix();
+
+  // Línea divisoria opcional para separar área de botones
+  stroke(100);
+  line(0, areaVizH, sketchW, areaVizH);
 }
 
-// --- Botones ---
+// --- Botones abajo, desplazados 100px a la derecha ---
 void drawButtons() {
-  // Botón 1: Heatmap
+  int bx1 = 100; // 100px desde el borde izquierdo de la ventana
+  int by  = areaVizH + 40; // Debajo del área de gráfica
+  int bW  = 160;
+  int bH  = 40;
+  int sep = 40 + 40; // separación entre botones
+
+  // Botón Heatmap
   fill(mostrarHeatmap ? color(100, 200, 255) : 180);
   stroke(60);
-  rect(20, 20, 160, 40, 8);
+  rect(bx1, by, bW, bH, 8);
   fill(0);
   noStroke();
   textAlign(CENTER, CENTER);
-  text("Mostrar campo color", 100, 40);
+  text("Mostrar campo color", bx1 + bW/2, by + bH/2);
 
-  // Botón 2: Vector+cuadrícula
+  // Botón Vector+cuadrícula
+  int bx2 = bx1 + bW + sep;
   fill(mostrarVectorGrid ? color(255, 180, 100) : 180);
   stroke(60);
-  rect(200, 20, 200, 40, 8);
+  rect(bx2, by, bW, bH, 8);
   fill(0);
   noStroke();
-  text("Mostrar flechas+cuadrícula", 300, 40);
+  text("Mostrar flechas+cuadrícula", bx2 + bW/2, by + bH/2);
 }
 
 void mousePressed() {
+  int bx1 = 100;
+  int by = areaVizH + 40;
+  int bW = 160;
+  int bH = 40;
+  int sep = 40 + 40;
+
+  int bx2 = bx1 + bW + sep;
   // Botón Heatmap
-  if (mouseX > 20 && mouseX < 180 && mouseY > 20 && mouseY < 60) {
+  if (mouseX > bx1 && mouseX < bx1+bW && mouseY > by && mouseY < by+bH)
     mostrarHeatmap = !mostrarHeatmap;
-  }
   // Botón Vector+Grid
-  if (mouseX > 200 && mouseX < 400 && mouseY > 20 && mouseY < 60) {
+  if (mouseX > bx2 && mouseX < bx2+bW && mouseY > by && mouseY < by+bH)
     mostrarVectorGrid = !mostrarVectorGrid;
-  }
 }
 
-// Dibuja la cuadrícula de fondo
+// --- Dibujo de la gráfica adaptado al área ---
 void drawGrid() {
   stroke(80, 60);
-  for (int x = 100; x <= width-100; x += arrowGrid) line(x, 100, x, height-100);
-  for (int y = 100; y <= height-100; y += arrowGrid) line(100, y, width-100, y);
+  for (int x = 100; x <= areaVizW-100; x += arrowGrid) line(x, 100, x, areaVizH-100);
+  for (int y = 100; y <= areaVizH-100; y += arrowGrid) line(100, y, areaVizW-100, y);
 }
 
-// Heatmap interpolado usando IDW y mapeo multicolor
 void drawInterpolatedHeatmap() {
-  for (int y = 0; y < height; y += gridSize) {
-    for (int x = 0; x < width; x += gridSize) {
-      float posX = map(x, 100, width-100, -1, 1);
-      float posY = map(y, height-100, 100, -1, 1);
+  for (int y = 0; y < areaVizH; y += gridSize) {
+    for (int x = 0; x < areaVizW; x += gridSize) {
+      float posX = map(x, 100, areaVizW-100, -1, 1);
+      float posY = map(y, areaVizH-100, 100, -1, 1);
       float num = 0;
       float den = 0;
       for (Sensor s : sensors) {
@@ -111,11 +132,7 @@ void drawInterpolatedHeatmap() {
         den += w;
       }
       float interpMag = num / den;
-
-      // Umbrales de color (ajusta según tus datos)
-      float t1 = 10;  // Muy débil
-      float t2 = 25;  // Medio
-      float t3 = 40;  // Moderado
+      float t1 = 10, t2 = 25, t3 = 40;
       color c;
       if (interpMag < t1) {
         c = azulOscuro;
@@ -126,23 +143,22 @@ void drawInterpolatedHeatmap() {
         float amt = map(interpMag, t2, t3, 0, 1);
         c = lerpColor(verde, amarillo, amt);
       } else {
-        float amt = map(interpMag, t3, 60, 0, 1); // Ajusta "60" a tu valor máximo real
+        float amt = map(interpMag, t3, 60, 0, 1);
         c = lerpColor(amarillo, rojo, amt);
       }
       noStroke();
-      fill(c, 60); // Transparencia
+      fill(c, 60);
       rect(x, y, gridSize, gridSize);
     }
   }
 }
 
-// Campo vectorial interpolado
 void drawVectorField() {
   stroke(255);
-  for (int y = 100; y < height-100; y += arrowGrid) {
-    for (int x = 100; x < width-100; x += arrowGrid) {
-      float posX = map(x, 100, width-100, -1, 1);
-      float posY = map(y, height-100, 100, -1, 1);
+  for (int y = 100; y < areaVizH-100; y += arrowGrid) {
+    for (int x = 100; x < areaVizW-100; x += arrowGrid) {
+      float posX = map(x, 100, areaVizW-100, -1, 1);
+      float posY = map(y, areaVizH-100, 100, -1, 1);
       float bx=0, by=0, den=0;
       for (Sensor s : sensors) {
         float dx = posX - s.x;
@@ -157,13 +173,12 @@ void drawVectorField() {
       by /= den;
       float angle = atan2(by, bx);
       float mag = sqrt(bx*bx + by*by);
-      float len = map(mag, 0, 60, 10, arrowGrid*0.8); // Ajusta "60" si es necesario
+      float len = map(mag, 0, 60, 10, arrowGrid*0.8);
       pushMatrix();
       translate(x, y);
       rotate(angle);
       strokeWeight(2);
       line(0, 0, len, 0);
-      // Cabeza de flecha
       line(len, 0, len-6, -4);
       line(len, 0, len-6, 4);
       popMatrix();
@@ -171,11 +186,10 @@ void drawVectorField() {
   }
 }
 
-// Flechas y magnitud en los sensores
 void drawSensorArrows() {
   for (Sensor s : sensors) {
-    float px = map(s.x, -1, 1, 100, width-100);
-    float py = map(s.y, -1, 1, height-100, 100);
+    float px = map(s.x, -1, 1, 100, areaVizW-100);
+    float py = map(s.y, -1, 1, areaVizH-100, 100);
     float angle = atan2(s.by, s.bx);
     float mag = s.magnitude();
     float len = map(mag, 0, 60, 20, 60);
@@ -194,11 +208,10 @@ void drawSensorArrows() {
   }
 }
 
-// Dibuja las posiciones de sensores
 void drawSensorPositions() {
   for (Sensor s : sensors) {
-    float px = map(s.x, -1, 1, 100, width-100);
-    float py = map(s.y, -1, 1, height-100, 100);
+    float px = map(s.x, -1, 1, 100, areaVizW-100);
+    float py = map(s.y, -1, 1, areaVizH-100, 100);
     fill(255, 255, 0);
     noStroke();
     ellipse(px, py, 14, 14);
