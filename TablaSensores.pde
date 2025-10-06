@@ -1,14 +1,19 @@
 class TablaSensores {
-  String[] posiciones = {"(–1, –1)", "(1, –1)", "(–1, 1)", "(1, 1)", "(0,0)", "(0,1)", "(1,0)", "(0,-1)"}; // ajusta según tus sensores
+  String[] posiciones = {"(–1, –1)", "(1, –1)", "(–1, 1)", "(1, 1)", "(0,0)", "(0,1)", "(1,0)", "(0,-1)"}; // ajustar según los sensores
 
   void display() {
-    int x0 = 70, y0 = 130;
     int rowH = 35;
     int colW = 110;
     int cols = 6;
     String[] headers = {"Sensor", "Posición (X,Y)", "Bx (µT)", "By (µT)", "Bz (µT)", "|B| (µT)"};
-    fill(40,200); noStroke();
-    rect(x0-10, y0-45, colW*cols+20, rowH*(sensors.length+1)+30, 10);
+    int tablaAncho = colW * cols;
+    int tablaAlto = rowH * (sensors.length + 1) + 30;
+    int x0 = (width - tablaAncho) / 2;   
+    int y0 = (height - tablaAlto)/2 -70; 
+    
+    fill(130); 
+    noStroke();
+    rect(x0-10, y0-35, tablaAncho+20, tablaAlto, 10);
 
     textAlign(CENTER, CENTER);
     textSize(17);

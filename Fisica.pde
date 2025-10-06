@@ -81,7 +81,7 @@ void draw() {
 
 // Botones Configuración
 void drawButtons() {
-  int bx1 = 200; // desde el borde izquierdo
+  int bx1 = 100; // desde el borde izquierdo
   int by  = areaVizH + (barraH/2) - 20; // Centrado en la barra de abajo
   int bW  = 160;
   int bH  = 40;
@@ -116,7 +116,7 @@ void drawButtons() {
 }
 
 void mousePressed() {
-  int bx1 = 200;
+  int bx1 = 100;
   int by = areaVizH + (barraH/2) - 20;
   int bW = 160;
   int bH = 40;
