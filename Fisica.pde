@@ -2,7 +2,9 @@
 Table table;
 Sensor[] sensors;
 int gridSize = 5;      
-int arrowGrid = 30;    
+int arrowGrid = 30;
+
+boolean mostrarTabla = false;
 
 // Área de visualización y sketch
 int areaVizW = 850;  
@@ -16,6 +18,8 @@ color azulOscuro, verde, amarillo, rojo;
 
 boolean mostrarHeatmap = true;
 boolean mostrarVectorGrid = true;
+
+TablaSensores tabla; 
 
 void setup() {
   size(850, 850);
@@ -36,41 +40,43 @@ void setup() {
     sensors[i] = new Sensor(x, y, bx, by, bz);
   }
   textFont(createFont("Arial", 15));
+  tabla = new TablaSensores(); // <--- inicializa la tabla
 }
 
 void draw() {
   background(20);
 
-  // Dibuja la barra negra SOLO abajo para los botones
+  // Dibuja la barra negra 
   noStroke();
   fill(30);
   rect(0, areaVizH, sketchW, barraH);
 
   drawButtons();
 
-  pushMatrix();
-  // Limita la gráfica a la parte de arriba
-  clip(0, 0, areaVizW, areaVizH);
-  if (mostrarHeatmap && !mostrarVectorGrid) {
-    drawInterpolatedHeatmap();
-  } else if (!mostrarHeatmap && mostrarVectorGrid) {
-    drawGrid();
-    drawVectorField();
-    drawSensorArrows();
-    drawSensorPositions();
-  } else if (mostrarHeatmap && mostrarVectorGrid) {
-    drawInterpolatedHeatmap();
-    drawGrid();
-    drawVectorField();
-    drawSensorArrows();
-    drawSensorPositions();
+  if (!mostrarTabla) {
+    pushMatrix();
+    clip(0, 0, areaVizW, areaVizH);
+    if (mostrarHeatmap && !mostrarVectorGrid) {
+      drawInterpolatedHeatmap();
+    } else if (!mostrarHeatmap && mostrarVectorGrid) {
+      drawGrid();
+      drawVectorField();
+      drawSensorArrows();
+      drawSensorPositions();
+    } else if (mostrarHeatmap && mostrarVectorGrid) {
+      drawInterpolatedHeatmap();
+      drawGrid();
+      drawVectorField();
+      drawSensorArrows();
+      drawSensorPositions();
+    }
+    noClip();
+    popMatrix();
+    stroke(100);
+    line(0, areaVizH, sketchW, areaVizH);
+  } else {
+    tabla.display(); 
   }
-  noClip();
-  popMatrix();
-
-  // Línea divisoria entre área gráfica y barra de botones
-  stroke(100);
-  line(0, areaVizH, sketchW, areaVizH);
 }
 
 // Botones Configuración
@@ -98,6 +104,15 @@ void drawButtons() {
   fill(0);
   noStroke();
   text("Campo Vectorial", bx2 + bW/2, by + bH/2);
+  
+  //Botón tabla
+  int bx3 = bx2 + bW + sep;
+  fill(mostrarTabla ? color(200, 220, 120) : 180);
+  stroke(60);
+  rect(bx3, by, bW, bH, 8);
+  fill(0);
+  noStroke();
+  text("Tabla", bx3 + bW/2, by + bH/2);
 }
 
 void mousePressed() {
@@ -107,11 +122,14 @@ void mousePressed() {
   int bH = 40;
   int sep = 40 + 40;
   int bx2 = bx1 + bW + sep;
+  int bx3 = bx2 + bW + sep; 
 
   if (mouseX > bx1 && mouseX < bx1+bW && mouseY > by && mouseY < by+bH)
     mostrarHeatmap = !mostrarHeatmap;
   if (mouseX > bx2 && mouseX < bx2+bW && mouseY > by && mouseY < by+bH)
-    mostrarVectorGrid = !mostrarVectorGrid;
+    mostrarVectorGrid = !mostrarVectorGrid;  
+  if (mouseX > bx3 && mouseX < bx3+bW && mouseY > by && mouseY < by+bH)
+    mostrarTabla = !mostrarTabla;
 }
 
 // Dibujo de la gráfica adaptado al área 
